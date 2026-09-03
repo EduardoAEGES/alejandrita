@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Control Financiero Premium</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="background-elements">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+    </div>
+
+    <div class="container">
+        <header>
+            <h1>Ale<span>Track</span></h1>
+            <p>Control de pagos y horas de actividad</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="summary-card glass">
+                <div class="summary-info">
+                    <h2>Monto Acumulado Pendiente</h2>
+                    <p class="amount" id="total-amount">S/ 0.00</p>
+                </div>
+                <button class="btn btn-primary" id="btn-pay-all" disabled>Pagar Todo</button>
+            </div>
+
+            <div class="add-activity-card glass">
+                <h2>Nueva Actividad</h2>
+                <form id="activity-form">
+                    <div class="form-group">
+                        <label for="desc">Descripción</label>
+                        <select id="desc" required>
+                            <option value="" disabled selected>Selecciona una actividad...</option>
+                            <option value="REUNIÓN + CAPACITACIÓN">REUNIÓN + CAPACITACIÓN</option>
+                            <option value="SUPERVISIÓN + EJECUCIÓN">SUPERVISIÓN + EJECUCIÓN</option>
+                        </select>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Hora Inicio</label>
+                            <div class="time-input-row">
+                                <input type="time" id="start-time" readonly required>
+                                <button type="button" class="btn btn-primary btn-small" id="btn-entrada" title="Marcar ahora">⏱️</button>
+                                <button type="button" class="btn btn-outline btn-small" id="btn-manual-entrada" title="Ingreso manual">✍️</button>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Hora Fin</label>
+                            <div class="time-input-row">
+                                <input type="time" id="end-time" readonly required>
+                                <button type="button" class="btn btn-primary btn-small" id="btn-salida" title="Marcar ahora">⏱️</button>
+                                <button type="button" class="btn btn-outline btn-small" id="btn-manual-salida" title="Ingreso manual">✍️</button>
+                            </div>
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-secondary">Registrar Actividad</button>
+                </form>
+            </div>
+        </div>
+
+        <div class="activities-section">
+            <h2>Historial de Actividades</h2>
+            <div class="activities-list" id="activities-list">
+                <!-- Activity cards will be generated here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for PIN -->
+    <div class="modal-overlay" id="pin-modal">
+        <div class="modal glass">
+            <h2>Autorización Requerida</h2>
+            <p>Ingrese el código de pago para confirmar.</p>
+            <input type="password" id="pin-input" placeholder="****" maxlength="8">
+            
+            <div class="form-group" id="payment-method-container" style="text-align: left; display: none; margin-bottom: 1.5rem;">
+                <label for="payment-method-select">Medio de Pago</label>
+                <select id="payment-method-select">
+                    <option value="Efectivo">Efectivo</option>
+                    <option value="Yape">Yape</option>
+                    <option value="Plin">Plin</option>
+                    <option value="Transferencia">Transferencia</option>
+                </select>
+            </div>
+            
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="btn-cancel-pin">Cancelar</button>
+                <button class="btn btn-primary" id="btn-confirm-pin">Confirmar</button>
+            </div>
+            <p class="error-msg" id="pin-error">Código incorrecto.</p>
+        </div>
+    </div>
+
+    <!-- Modal for Manual Time Entry -->
+    <div class="modal-overlay" id="manual-time-modal">
+        <div class="modal glass">
+            <h2 id="manual-time-title">Ingreso Manual</h2>
+            <p>Por favor, ingrese la hora y el sustento de por qué está marcando manualmente.</p>
+            <div class="form-group" style="text-align: left;">
+                <label for="manual-time-input">Hora</label>
+                <input type="time" id="manual-time-input" required>
+            </div>
+            <div class="form-group" style="text-align: left;">
+                <label for="manual-sustento">Sustento (Obligatorio sin PIN)</label>
+                <input type="text" id="manual-sustento" placeholder="Ej: Me olvidé de marcar...">
+            </div>
+            <div class="form-group" style="text-align: left;">
+                <label for="manual-pin">PIN Maestro (Opcional)</label>
+                <input type="password" id="manual-pin" placeholder="****" maxlength="8">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-outline" id="btn-cancel-manual">Cancelar</button>
+                <button class="btn btn-primary" id="btn-confirm-manual">Guardar</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="app.js"></script>
+</body>
+</html>
