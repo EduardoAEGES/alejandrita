@@ -188,7 +188,6 @@ select option {
 input:focus, select:focus {
     outline: none;
     border-color: var(--primary-hover);
-    box-shadow: 0 0 0 3px rgba(26, 76, 138, 0.15);
     background: #ffffff;
 }
 
@@ -290,12 +289,11 @@ input[type="time"]::-webkit-calendar-picker-indicator {
     justify-content: space-between;
     align-items: center;
     transition: var(--transition);
-    border-left: 4px solid var(--primary-hover);
 }
 
 .activity-card:hover {
     transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
+    border-color: var(--primary);
 }
 
 @media (max-width: 600px) {
