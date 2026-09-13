@@ -16,6 +16,8 @@ const startTimeInput = document.getElementById('start-time');
 const endTimeInput = document.getElementById('end-time');
 const totalAmountEl = document.getElementById('total-amount');
 const btnPayAll = document.getElementById('btn-pay-all');
+const manualAmountInput = document.getElementById('manual-amount-input');
+const btnPayManual = document.getElementById('btn-pay-manual');
 const activitiesList = document.getElementById('activities-list');
 const pinModal = document.getElementById('pin-modal');
 const pinInput = document.getElementById('pin-input');
@@ -105,6 +107,13 @@ function updateSummary() {
         
     totalAmountEl.textContent = formatMoney(totalPending);
     btnPayAll.disabled = totalPending === 0;
+    if (btnPayManual && manualAmountInput) {
+        btnPayManual.disabled = totalPending === 0;
+        manualAmountInput.disabled = totalPending === 0;
+        if (totalPending === 0) {
+            manualAmountInput.value = '';
+        }
+    }
 }
 
 // Render Activities List
@@ -203,7 +212,7 @@ window.openPinModal = function(type, target) {
     pinError.classList.remove('active');
     
     const paymentContainer = document.getElementById('payment-method-container');
-    if (type === 'pay_single' || type === 'pay_all') {
+    if (type === 'pay_single' || type === 'pay_all' || type === 'pay_manual') {
         paymentContainer.style.display = 'block';
     } else {
         paymentContainer.style.display = 'none';
@@ -222,6 +231,24 @@ btnCancelPin.addEventListener('click', closePinModal);
 
 btnPayAll.addEventListener('click', () => {
     openPinModal('pay_all', null);
+});
+
+btnPayManual.addEventListener('click', () => {
+    const amount = parseFloat(manualAmountInput.value);
+    if (isNaN(amount) || amount <= 0) {
+        alert("Por favor, ingrese un monto válido a abonar.");
+        return;
+    }
+    const totalPending = activities
+        .filter(a => !a.paid)
+        .reduce((sum, a) => sum + Number(a.amount), 0);
+    
+    if (amount > totalPending) {
+        alert("El monto ingresado es mayor a la deuda total.");
+        return;
+    }
+
+    openPinModal('pay_manual', amount);
 });
 
 btnConfirmPin.addEventListener('click', processPinAction);
@@ -256,6 +283,54 @@ async function processPinAction() {
             const method = document.getElementById('payment-method-select').value;
             const dateStr = new Date().toLocaleDateString();
             await db.from('actividades').update({ paid: true, paid_at: dateStr, payment_method: method }).eq('paid', false);
+        } else if (type === 'pay_manual') {
+            const method = document.getElementById('payment-method-select').value;
+            const dateStr = new Date().toLocaleDateString();
+            let remainingAmount = parseFloat(target);
+            
+            // Get pending activities sorted by oldest first (ascending ID)
+            const pendingActivities = [...activities].filter(a => !a.paid).sort((a, b) => Number(a.id) - Number(b.id));
+            
+            for (let i = 0; i < pendingActivities.length; i++) {
+                if (remainingAmount <= 0) break;
+                
+                const activity = pendingActivities[i];
+                const actAmount = parseFloat(activity.amount);
+                
+                if (remainingAmount >= actAmount) {
+                    // Pay completely
+                    await db.from('actividades').update({ 
+                        paid: true, 
+                        paid_at: dateStr, 
+                        payment_method: method 
+                    }).eq('id', activity.id);
+                    remainingAmount -= actAmount;
+                } else {
+                    // Pay partially
+                    // 1. Create a new activity for the paid portion
+                    const splitActivity = {
+                        ...activity,
+                        id: Date.now() + i, // slight adjustment to avoid duplicate ID
+                        amount: remainingAmount,
+                        paid: true,
+                        paid_at: dateStr,
+                        payment_method: method,
+                        sustento: activity.sustento ? activity.sustento + ' (Pago Parcial)' : '(Pago Parcial)'
+                    };
+                    
+                    // 2. Update the original activity to reduce its amount
+                    const newPendingAmount = actAmount - remainingAmount;
+                    
+                    await db.from('actividades').insert([splitActivity]);
+                    await db.from('actividades').update({
+                        amount: newPendingAmount
+                    }).eq('id', activity.id);
+                    
+                    remainingAmount = 0;
+                    break;
+                }
+            }
+            if (manualAmountInput) manualAmountInput.value = '';
         } else if (type === 'pay_single') {
             const method = document.getElementById('payment-method-select').value;
             const dateStr = new Date().toLocaleDateString();
